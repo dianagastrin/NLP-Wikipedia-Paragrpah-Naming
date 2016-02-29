@@ -1,8 +1,11 @@
+import unicodedata
 import bz2
 import re
 from bs4 import BeautifulSoup
-
 import pickle
+
+def strip_accents(s):
+    return ''.join(c for c in unicodedata.normalize('NFD',s) if unicodedata.category(c) !='MN')
 # global variables
 templateA = re.compile("\{\{([a-z,A-Z,0-9]|\s|=|-)+\|[a-z,A-Z,0-9,_]+([a-z,A-Z,0-9]|\s|=)+\}\}")
 templateB = re.compile("\[\[([a-z,A-Z,0-9]|\s|=)+\|[a-z,A-Z,0-9]+([a-z,A-Z,0-9]|\s|=)+\]\]")
@@ -21,6 +24,7 @@ get_titles = re.compile("\=\=([\s,a-z,A-Z,0-9]|\s|=|-)+\=\=") #find titles ==tit
 defaultTitle = "Biography"
 curpos_title_paragraphs = []
 curpos_wikipedia_biography = []
+
 def get_title(page):
     return page.title.get_text()
 
@@ -59,7 +63,7 @@ def get_title_content_paragraph(titleOfArticle,cleanText):
 
 
 def clean_left_tags(text):
-    soup_deeper = BeautifulSoup(text,"lxml")
+    soup_deeper = BeautifulSoup(text, "lxml")
     [s.extract() for s in soup_deeper('ref')]
     [s.extract() for s in soup_deeper('center')]
     return soup_deeper.text
@@ -146,13 +150,14 @@ def parse_xml(filename):
     bzfile = bz2.BZ2File(filename)
     page = ''
     for line in bzfile:
-        str_line = line.decode("utf-8","replace")
+        str_line = strip_accents(line.decode("utf-8")) #remove unwanted unicode chars(like swedish chars)
     #turn from byte code to string type
         page += str_line
         if '</page>' in str_line:
             if 'Persondata' in page:
                 #determine if it's biography
                 soup = BeautifulSoup(page, 'lxml')
+                print(get_title(soup))
                 title_text.append((get_title(soup), get_text(soup)))
                 # pickle.dump(title_text, open('pickle'+i,'wb'))
             page = ''
@@ -161,6 +166,6 @@ def parse_xml(filename):
 
 if __name__ == '__main__':
     # When the script is self run
-    # parse_xml('enwiki-latest-pages-articles.xml.bz2')
-    parse_xml('chunk-1.xml.bz2')
+    parse_xml('enwiki-latest-pages-articles.xml.bz2')
+    # parse_xml('chunk-1.xml.bz2')
 
