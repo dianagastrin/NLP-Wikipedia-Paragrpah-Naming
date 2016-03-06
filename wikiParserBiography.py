@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 import pickle
 import string
+from nltk import FreqDist
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     only_ascii = nfkd_form.encode('ASCII', 'ignore')
@@ -14,18 +15,18 @@ templateB = re.compile("\[\[([a-z,A-Z,0-9]|\s|=)+\|[a-z,A-Z,0-9]+([a-z,A-Z,0-9]|
 templateC = re.compile("\{\{([a-z,A-Z,0-9]|\s|=|-)+\|([a-z,A-Z,0-9]|\s|=|-)+\|([a-z,A-Z,0-9]|\s|=|-)+\}\}")
 templateD = re.compile("([a-z,A-Z,0-9]|\s|\(|\))+\|([a-z,A-Z,0-9]|\s|\(|\)|=)+")
 templateE = re.compile("\[\[([a-z,A-Z,0-9]|\s|=)+:[a-z,A-Z,0-9]+([a-z,A-Z,0-9]|\s|=|_)+\]\]")
-templateF = re.compile("\*.+")
 templateG = re.compile("\{\|(_ | a-z |A-Z |0-9 |\w)+\|\}")
 templateH = re.compile(r"\{\{(Infobox|infobox)[\:,\s,a-z,A-Z,0-9,_,\|]+\|\}\}") #{Infobox anyStr |}}
 templateI = re.compile("\{\|[\s,a-z,A-Z,0-9,\=,\',_,\-,\,,\",\|,\!,\;,\.,\),\(,\W]*\|\}")#: {| any Str |}
 templateJ = re.compile("(\(|\[)(\)|\])")# exampe () or []
 match_urls = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""",re.DOTALL)
 match_file_or_image = re.compile("\[\[(File:|Image:|image:|file:)[a-z,A-Z,0-9,\|,\-,\=,\',\.,\s,_]+(\[\[[a-z,A-Z,0-9,\|,\-,\=,',\.,\s,_]+\]\])*\]\]")# :example [[file: [[dg]] sdg]]
-get_titles = re.compile("\=\=([\s,a-z,A-Z,0-9]|\s|=|-)+\=\=")#:example ==title==
+get_titles = re.compile("\=\=[a-z,A-Z,0-9,\-,\(,\),_]+\=\=")#:example ==title==
 get_summary_title = re.compile(":\'\'\'[a-z,A-Z,0-9,\s,=,\-,_,\']+\'\'\'")#:example :''''' someStr '''
 get_unwanted_ref = re.compile("<ref[\s,a-z,A-Z,0-9,=,\',_,\-,\,,\"]+/>")#:example <ref someStr />
 
 defaultTitle = "Biography"
+summaryTitle = "Summary"
 curpos_title_paragraphs = []
 curpos_wikipedia_biography = []
 
@@ -122,17 +123,21 @@ def get_title_content_paragraph(titleOfArticle,cleanText):
     title_text = []
     titles_of_paragraphs = []
     if cleanText.find('==') > 0:
-        templ_title_content = get_titles.finditer(cleanText)  # example {{str1 | str2}}
+        templ_title_content = get_titles.finditer(cleanText)  # example ==title==
         for match in templ_title_content:
             title_a_index = match.group().find('==')
             title_b_index = match.group().rfind('==')
             title = match.group()[title_a_index + 2: title_b_index]
+            print(title)
             titles_of_paragraphs.append(title)
-            text_with_less_titles = cleanText[cleanText.find(title) + len(title) + 2:]
-            if text_with_less_titles.find('==') > 0:
-                paragraph = text_with_less_titles[:text_with_less_titles.find('==')]
-            else:
-                paragraph = text_with_less_titles
+            summary = cleanText[:cleanText.find(match.group())]
+            titles_of_paragraphs.append(summaryTitle)
+            title_paragraph.append((summaryTitle, summary))
+            text_with_one_less_title = cleanText[cleanText.find(match.group()) + len(match.group()) + 1:]
+            if text_with_one_less_title.find('==') > 0:
+                paragraph = text_with_one_less_title[:text_with_one_less_title.find('==')]
+            else: #this biography doesn't have any title to any paragraph
+                paragraph = text_with_one_less_title
             title_paragraph.append((title, paragraph))
     else:
         title = defaultTitle
@@ -140,11 +145,9 @@ def get_title_content_paragraph(titleOfArticle,cleanText):
         titles_of_paragraphs.append(title)
         title_paragraph.append((title, paragraph))
     title_text.append((titleOfArticle, title_paragraph))
-    curpos_wikipedia_biography.append(title_text)
-    return curpos_title_paragraphs.append(titles_of_paragraphs)
+    return title_text, titles_of_paragraphs
 
-def most_frequent_titles(listOfTitles):
-    pass
+
     # list_of_titles = FreqDist(listOfTitles)
 
 '''
@@ -169,7 +172,7 @@ def dump_biography(filename, numberOfBiographies):
                 page = soup.text
                 page = remove_accents(page)
                 biographies.append((get_title(soup),page))
-                print(get_title(soup))
+                print(j)
                 if j%1000 == 0:
                     with open('biography' + str(j) + '.pickle', 'wb') as handle:
                             pickle.dump(biographies, handle)
@@ -185,18 +188,25 @@ def iterator_on_biography():
             yield biography
 
 if __name__ == '__main__':
-    # When the script is self run
-    #dump_biography('enwiki-latest-pages-articles.xml.bz2', 15000)
+    #When the script is self run
+    #dump_biography('enwiki-latest-pages-articles.xml.bz2', 30000)
     TITLE = 0
     TEXT = 1
     clean_biographies = []
+    titles = []
     for i, biography in enumerate(iterator_on_biography()):
         clean_biography = clean_text(biography[TEXT])
-        title = biography[0]
-        clean_biographies.append(get_title_content_paragraph(title,clean_biography))
-        if i % 1000:
+        title = biography[TITLE]
+        titles_paragraphs,titles_of_pargraphs = get_title_content_paragraph(title,clean_biography)
+        clean_biographies.append(titles_paragraphs)
+        titles = titles + titles_of_pargraphs
+        if i % 1000 == 0 and i != 0 :
             with open('corpus' + str(i) + '.pickle', 'wb') as handle:
                 pickle.dump(clean_biographies, handle)
             clean_biographies = []
-        print(i)
+        if i == 24000:
+            break
+    with open('titles.pickle', 'wb') as handle:
+        pickle.dump(titles_of_pargraphs, handle)
+
 
