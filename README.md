@@ -7,14 +7,15 @@ original entry.
 ###Parsing Algoritm 
 #### requirements:
 *python 3.5
+*wiki dump - suppoused to be like this  enwiki-latest-pages-articles.xml.bz2   
+            https://dumps.wikimedia.org/enwiki/latest/
 ##### libraries 
 * progressbar - install it from command line like this = 
 * >pip install progressbar2"
 * BeautifulSoup
 * >pip instal BeautifulSoup4
 * 
-*wiki dump - suppoused to be like this  enwiki-latest-pages-articles.xml.bz2   
-            https://dumps.wikimedia.org/enwiki/latest/
+
 
 ###Algorithm:
 * Prepare the texts, gather some statistics regarding average number of paragraphs, typicall topics etc.
