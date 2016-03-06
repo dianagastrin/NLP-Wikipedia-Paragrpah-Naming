@@ -10,11 +10,15 @@ original entry.
 * pip
 *wiki dump - suppoused to be like this  enwiki-latest-pages-articles.xml.bz2   
             https://dumps.wikimedia.org/enwiki/latest/
+
 ##### libraries 
 * progressbar - install it from command line like this = 
 * >pip install progressbar2"
+* https://pypi.python.org/pypi/progressbar2
+
 * BeautifulSoup
 * >pip install BeautifulSoup4
+* http://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
 
 
