@@ -14,7 +14,7 @@ original entry.
 * >pip install progressbar2"
 * BeautifulSoup
 * >pip instal BeautifulSoup4
-* 
+
 
 
 ###Algorithm:
