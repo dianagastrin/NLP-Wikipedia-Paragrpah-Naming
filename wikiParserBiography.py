@@ -3,12 +3,19 @@ import bz2
 import re
 from bs4 import BeautifulSoup
 import pickle
-import string
-from nltk import FreqDist
+from progressbar import ProgressBar
+import time
+
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     only_ascii = nfkd_form.encode('ASCII', 'ignore')
     return only_ascii.decode('utf-8')
+def count_words(page, minWordsInParagraph):
+    words = page.split()
+    return len(words) >= minWordsInParagraph
+
+pbar = ProgressBar(redirect_stdout=True)
+
 # global variables
 templateA = re.compile("{\{([a-z,A-Z,0-9,_]|\s|=|-)+\|[a-z,A-Z,0-9,_]+([a-z,A-Z,0-9]|\s|=)+\}\}")# :example {{kd-ds|dsd}}
 templateB = re.compile("\[\[([a-z,A-Z,0-9]|\s|=)+\|[a-z,A-Z,0-9]+([a-z,A-Z,0-9]|\s|=)+\]\]")
@@ -128,7 +135,6 @@ def get_title_content_paragraph(titleOfArticle,cleanText):
             title_a_index = match.group().find('==')
             title_b_index = match.group().rfind('==')
             title = match.group()[title_a_index + 2: title_b_index]
-            print(title)
             titles_of_paragraphs.append(title)
             summary = cleanText[:cleanText.find(match.group())]
             titles_of_paragraphs.append(summaryTitle)
@@ -138,12 +144,14 @@ def get_title_content_paragraph(titleOfArticle,cleanText):
                 paragraph = text_with_one_less_title[:text_with_one_less_title.find('==')]
             else: #this biography doesn't have any title to any paragraph
                 paragraph = text_with_one_less_title
-            title_paragraph.append((title, paragraph))
+            if count_words(paragraph, 7):
+                title_paragraph.append((title, paragraph))
     else:
         title = defaultTitle
         paragraph = cleanText
-        titles_of_paragraphs.append(title)
-        title_paragraph.append((title, paragraph))
+        if count_words(paragraph, 7):
+            titles_of_paragraphs.append(title)
+            title_paragraph.append((title, paragraph))
     title_text.append((titleOfArticle, title_paragraph))
     return title_text, titles_of_paragraphs
 
@@ -187,11 +195,14 @@ def iterator_on_biography():
         for biography in biographies:
             yield biography
 
+
+
 if __name__ == '__main__':
     #When the script is self run
     #dump_biography('enwiki-latest-pages-articles.xml.bz2', 30000)
     TITLE = 0
     TEXT = 1
+    bar = 0
     clean_biographies = []
     titles = []
     for i, biography in enumerate(iterator_on_biography()):
@@ -206,6 +217,11 @@ if __name__ == '__main__':
             clean_biographies = []
         if i == 24000:
             break
+        time.sleep(0.1)
+        if bar != 100:
+            bar = (i/24000) * 100
+            print(bar)
+        pbar.update(bar)
     with open('titles.pickle', 'wb') as handle:
         pickle.dump(titles_of_pargraphs, handle)
 
