@@ -4,6 +4,24 @@ Given a Wikipedia biography entry as one chunk of text, divide the text
 to pargraphs and name the paragraphs as closely as possible to the way it is in the
 original entry.
 
+###Parsing Algoritm 
+#### requirements:
+* python 3.5
+* pip
+*wiki dump - suppoused to be like this  enwiki-latest-pages-articles.xml.bz2   
+            https://dumps.wikimedia.org/enwiki/latest/
+
+##### libraries 
+* progressbar - install it from command line like this = 
+* >pip install progressbar2"
+* https://pypi.python.org/pypi/progressbar2
+
+* BeautifulSoup
+* >pip install BeautifulSoup4
+* http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+
+
 ###Algorithm:
 * Prepare the texts, gather some statistics regarding average number of paragraphs, typicall topics etc.
 * Run "tiling" on the text to split into segments.
