@@ -126,23 +126,31 @@ def clean_text(text):
     return text.replace(']]', '').replace('[[', '').replace('}}', '').replace('{{', '')
 
 def get_title_content_paragraph(titleOfArticle,cleanText):
+    i = 0
+    def extract_title(match):
+        title_a_index = match.group().find('==')
+        title_b_index = match.group().rfind('==')
+        return match.group()[title_a_index + 2: title_b_index]
     title_paragraph = []
     title_text = []
     titles_of_paragraphs = []
     if cleanText.find('==') > 0:
         templ_title_content = get_titles.finditer(cleanText)  # example ==title==
+        #for any title in the page
         for match in templ_title_content:
-            title_a_index = match.group().find('==')
-            title_b_index = match.group().rfind('==')
-            title = match.group()[title_a_index + 2: title_b_index]
+            #extract the matched title from page, only text without '==='
+            title = extract_title(match)
+            # add to the local function DS to be hold all titles.
             titles_of_paragraphs.append(title)
+            # summary doesn't have title.
             summary = cleanText[:cleanText.find(match.group())]
             titles_of_paragraphs.append(summaryTitle)
             title_paragraph.append((summaryTitle, summary))
+            # get rid of the title and determine the paragraph it belongs to
             text_with_one_less_title = cleanText[cleanText.find(match.group()) + len(match.group()) + 1:]
             if text_with_one_less_title.find('==') > 0:
                 paragraph = text_with_one_less_title[:text_with_one_less_title.find('==')]
-            else: #this biography doesn't have any title to any paragraph
+            else: #this biography doesn't have any other title to any paragraph.
                 paragraph = text_with_one_less_title
             if count_words(paragraph, 7):
                 title_paragraph.append((title, paragraph))
@@ -180,7 +188,6 @@ def dump_biography(filename, numberOfBiographies):
                 page = soup.text
                 page = remove_accents(page)
                 biographies.append((get_title(soup),page))
-                print(j)
                 if j%1000 == 0:
                     with open('biography' + str(j) + '.pickle', 'wb') as handle:
                             pickle.dump(biographies, handle)
@@ -189,40 +196,41 @@ def dump_biography(filename, numberOfBiographies):
                         break
             page = ''
 
-def iterator_on_biography():
-    for i in range(1000,15000,1000):
-        biographies = pickle.load(open("biography"+str(i)+".pickle", "rb"))
-        for biography in biographies:
-            yield biography
 
-
-
-if __name__ == '__main__':
-    #When the script is self run
-    #dump_biography('enwiki-latest-pages-articles.xml.bz2', 30000)
+def dump_clean_biography(test_total_biographies=24000,number_of_biographies_in_each_batch=1000):
     TITLE = 0
     TEXT = 1
     bar = 0
+    def _iterator_on_biography():
+        for i in range(number_of_biographies_in_each_batch,test_total_biographies,number_of_biographies_in_each_batch):
+            biographies = pickle.load(open("biography"+str(i)+".pickle", "rb"))
+            for biography in biographies:
+                yield biography
     clean_biographies = []
     titles = []
-    for i, biography in enumerate(iterator_on_biography()):
+    for i, biography in enumerate(_iterator_on_biography()):
         clean_biography = clean_text(biography[TEXT])
         title = biography[TITLE]
         titles_paragraphs,titles_of_pargraphs = get_title_content_paragraph(title,clean_biography)
         clean_biographies.append(titles_paragraphs)
         titles = titles + titles_of_pargraphs
-        if i % 1000 == 0 and i != 0 :
+        if i % number_of_biographies_in_each_batch == 0 and i != 0 :
             with open('corpus' + str(i) + '.pickle', 'wb') as handle:
                 pickle.dump(clean_biographies, handle)
             clean_biographies = []
-        if i == 24000:
+        #because it otherwise will pass all 30,000 biographies.(by defualt)
+        if i == test_total_biographies:
             break
         time.sleep(0.1)
         if bar != 100:
-            bar = (i/24000) * 100
-            print(bar)
+            bar = (i/test_total_biographies) * 100
         pbar.update(bar)
     with open('titles.pickle', 'wb') as handle:
-        pickle.dump(titles_of_pargraphs, handle)
+        pickle.dump(titles, handle)
+
+if __name__ == '__main__':
+#When the script is self run
+    #dump_biography('enwiki-latest-pages-articles.xml.bz2', 30000)
+    dump_clean_biography()
 
 
