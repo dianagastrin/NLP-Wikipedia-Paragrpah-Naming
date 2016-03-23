@@ -33,5 +33,9 @@ original entry.
 ### References:
 **Learning Biography Sections**
 * http://www.aclweb.org/anthology/D15-1095
+
 **Tiling**
 * https://www.lt.tu-darmstadt.de/fileadmin/user_upload/Group_UKP/publikationen/2012/Riedl_Biemann_ACL_SRW_2012_TopicTiling_A_Text_Segmentation_Algorithm.pdf
+
+**Segmentation with word Embeddings**
+http://arxiv.org/pdf/1503.05543v1.pdf
