@@ -39,3 +39,6 @@ original entry.
 
 **Segmentation with word Embeddings**
 * http://arxiv.org/pdf/1503.05543v1.pdf
+
+**Evaluating Segmentation**
+* http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-864-advanced-natural-language-processing-fall-2005/lecture-notes/lec13.pdf
